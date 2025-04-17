@@ -2,24 +2,28 @@ server:
   port: 8100
   servlet:
     context-path: /api
-  # cookie 7 天过期
-  reactive:
-    session:
-      timeout: 504800
 
-# Spring 配置
+################ Spring 配置 ###############
 spring:
   application:
-    name: baolong-boot-init
+    name: silas-boot-init
   profiles:
-    # 开发环境文件后缀 local/prod
-    active: local
+    # 开发环境
+    active: dev
+  servlet:
+    multipart:
+      # 文件最大大小 10MB
+      max-file-size: 10MB
+      # 请求最大文件大小 10MB
+      max-request-size: 10MB
+  ############### MySQl 配置 ###############
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: ${mysql.url}
     username: ${mysql.username}
     password: ${mysql.password}
   data:
+    ############### Redis 配置 ###############
     redis:
       host: ${redis.host}
       port: ${redis.port}
@@ -41,16 +45,11 @@ spring:
           max-wait: -1ms
           # 断开连接的间隔时间 5 秒
           time-between-eviction-runs: 5000
-  # 开放更大的上传大小
-  servlet:
-    multipart:
-      max-file-size: 10MB
-      max-request-size: 10MB
-  # 发送邮件配置（QQ邮箱）
+  ############### 邮箱 配置 ###############
   mail:
     host: ${email.host}
     port: ${email.port}
-    nickname: baolong
+    nickname: Silas Yan
     username: ${email.username}
     password: ${email.password}
     protocol: ${email.protocol}
@@ -65,25 +64,64 @@ spring:
           ssl:
             enable: true
           socketFactory:
-            port: ${email.port}
+            port: ${spring.email.port}
             class: javax.net.ssl.SSLSocketFactory
 
 # MyBatisPlus 配置
 mybatis-plus:
-  mapper-locations: classpath:/mapper/*.xml # mapper 文件位置
+  # mapper 文件位置
+  mapper-locations: classpath:/mapper/*.xml
   configuration:
-    map-underscore-to-camel-case: true # 驼峰命名
-    # 仅在开发环境开启日志
+    # 开启驼峰命名
+    map-underscore-to-camel-case: true
+    # 日志配置
     log-impl: ${mybatis-plus.log-impl}
+  # 全局配置
   global-config:
+    # 是否开启启动打印的 LOGO
+    banner: false
     db-config:
-      logic-delete-field: isDelete # 全局逻辑删除的实体字段名
-      logic-delete-value: 1 # 逻辑已删除值（默认为 1）
-      logic-not-delete-value: 0 # 逻辑未删除值（默认为 0）
-      table-underline: true # 表名是否使用下划线命名
-    banner: false # 关闭 mybatis-plus 启动打印的 banner
+      # 表名是否使用下划线命名
+      table-underline: true
+      # 全局逻辑删除的实体字段名
+      logic-delete-field: isDelete
+      # 逻辑已删除值（默认为 1）
+      logic-delete-value: 1
+      # 逻辑未删除值（默认为 0）
+      logic-not-delete-value: 0
 
-# springdoc-openapi项目配置
+################ 分布式锁 配置 ###############
+redisson:
+  enable: true
+  client: redis://${spring.data.redis.host}:${spring.data.redis.port}
+  database: ${spring.data.redis.database}
+  password: ${spring.data.redis.password}
+  timeout: 10000
+
+################ Sa-Token 配置 ###############
+sa-token:
+  # token 名称（同时也是 cookie 名称）
+  token-name: silasToken
+  # token 前缀
+  token-prefix: Bearer
+  # jwt秘钥
+  jwt-secret-key: silas-boot-init
+  # token 有效期（单位：秒） 1 天，-1 代表永久有效
+  timeout: 86400
+  # token 最低活跃频率（单位：秒），如果 token 超过此时间没有访问系统就会被冻结，默认-1 代表不限制，永不冻结
+  active-timeout: -1
+  # 是否允许同一账号多地同时登录 （为 true 时允许一起登录, 为 false 时新登录挤掉旧登录）
+  is-concurrent: true
+  # 在多人登录同一账号时，是否共用一个 token （为 true 时所有登录共用一个 token, 为 false 时每次登录新建一个 token）
+  is-share: true
+  # token 风格（默认可取值：uuid、simple-uuid、random-32、random-64、random-128、tik）
+  token-style: uuid
+  # 是否输出操作日志
+  is-log: ${sa-token-log}
+  is-read-header: true
+  is-read-cookie: false
+
+################ Swagger 配置 ###############
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
@@ -101,7 +139,7 @@ knife4j:
   setting:
     language: zh_cn
 
-# 日志配置
+################ 日志 配置 ###############
 logging:
   config: classpath:logback-spring.xml
   file:
